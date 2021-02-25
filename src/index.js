@@ -1,12 +1,17 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './App';
+import Login from './Login';
 import reportWebVitals from './reportWebVitals';
+import App from './App';
+import { useState, useRef, useEffect } from 'react';
+import io from 'socket.io-client';
+
+var temp = false;
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    { temp ? <App /> : <Login /> }
   </React.StrictMode>,
   document.getElementById('root')
 );
