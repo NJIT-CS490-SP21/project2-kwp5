@@ -10,7 +10,6 @@ const socket = io();
 export function Login() {
     //const [users, setUsers] = useState([]);
     const inputRef = useRef(null);
-    var newUser = false;
     var username = "";
     var users = [];
     function enterUser() {

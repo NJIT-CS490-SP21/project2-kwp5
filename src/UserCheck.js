@@ -1,6 +1,5 @@
 import App from './App';
 import Login from './Login';
-import React from 'react';
 
 
 export function Usercheck(props) {

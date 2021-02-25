@@ -1,13 +1,14 @@
-import React from 'react';
 import './Board.css';
 import { Box } from './Box.js';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 
 const socket = io();
 export function Board(props) {
     const [board, setBoard] = useState([null,null,null,null,null,null,null,null,null]);
     const [turn, setNextTurn] = useState(true);
+    const [outcome, setOutcome] = useState("");
+
     function onClickBox(boxIndex) {
         if (board[boxIndex] == null && turn){
             setBoard(prevBoard => [...prevBoard, prevBoard[boxIndex] = 'X']);
@@ -43,29 +44,37 @@ export function Board(props) {
     }, [board]);
     
     function calculateWinner(board) {
-      const lines = [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-        [0, 3, 6],
-        [1, 4, 7],
-        [2, 5, 8],
-        [0, 4, 8],
-        [2, 4, 6],
-      ];
-      for (let i = 0; i < lines.length; i++) {
-          const [a, b, c] = lines[i];
-          if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+        const lines = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6],
+        ];
+        for (let i = 0; i < lines.length; i++) {
+            const [a, b, c] = lines[i];
+            if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                document.getElementById("winnerHead").style.visibility = "visible";
+                document.getElementById("winnerButton").style.visibility = "visible";
+                setOutcome(noOutcome => [noOutcome, board[a]+" Wins"]);
+                return true;
+            }
+        }
+        if (board.every(value => value !== null)) {
             document.getElementById("winnerHead").style.visibility = "visible";
             document.getElementById("winnerButton").style.visibility = "visible";
-            return board[a];
-          }
-      }
-      return false;
+            setOutcome(noOutcome => [noOutcome, "Draw"]);
+            return true;
+        }
+        return false;
     }
     
     function restartGame() {
         setBoard([null,null,null,null,null,null,null,null,null]);
+        setOutcome("");
         document.getElementById("winnerHead").style.visibility = "hidden";
         document.getElementById("winnerButton").style.visibility = "hidden";
     }
@@ -83,7 +92,7 @@ export function Board(props) {
                 <Box event={onClickBox} index='8' value={board[8]}/>
             </div>
             <div>
-                <h3 id="winnerHead" style={{visibility: "hidden"}}>{board[0]} Wins</h3>
+                <h3 id="winnerHead" style={{visibility: "hidden"}}>{outcome}</h3>
                 <button id="winnerButton" style={{visibility: "hidden"}} onClick={restartGame}>Play Again</button>
             </div>
         </div>;
