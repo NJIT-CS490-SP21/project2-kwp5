@@ -2,45 +2,68 @@ import './Board.css';
 import { Box } from './Box.js';
 import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
+import UserList from './UserList';
 
 const socket = io();
 export function Board(props) {
     const [board, setBoard] = useState([null,null,null,null,null,null,null,null,null]);
-    const [turn, setNextTurn] = useState(true);
+    const [turn, setNextTurn] = useState(false);
     const [outcome, setOutcome] = useState("");
-
+    const [players, setPlayers] = useState([]);
+    const [spectators, setSpectators] = useState([]);
     function onClickBox(boxIndex) {
-        if (board[boxIndex] == null && turn){
-            setBoard(prevBoard => [...prevBoard, prevBoard[boxIndex] = 'X']);
+        var data = { index: boxIndex, playername: props.player };
+        if (calculateWinner(board)) {
+            return;
         }
-        else if (board[boxIndex] == null) {
-            setBoard(prevBoard => [...prevBoard, prevBoard[boxIndex] = 'O']);
+        setNextTurn(prevTurn => !prevTurn);
+        if (turn) {
+            if (board[boxIndex] == null && props.player === players[0]){
+                setBoard(prevBoard => [...prevBoard, prevBoard[boxIndex] = 'X']);
+                socket.emit('boxClick', data);
+               // setNextTurn(prevTurn => !prevTurn);
+            }
+            else if (board[boxIndex] == null && props.player === players[1]) {
+                setBoard(prevBoard => [...prevBoard, prevBoard[boxIndex] = 'O']);
+                socket.emit('boxClick', data);
+               // setNextTurn(prevTurn => !prevTurn);
+            }
         }
-        var data = { index: boxIndex, turn: turn };
-        socket.emit('boxClick', data);
-        setNextTurn(turn => !turn);
+        console.log(turn);
+       // setNextTurn(prevTurn => !prevTurn);
     }
-    
+
     useEffect(() => {
         socket.on('boxClick', (data) => {
             console.log('Chat event received!');
             console.log(data.index);
-            setNextTurn(turn => !turn);
-            if (board[data.index] == null && data.turn){
+            console.log(data.turn);
+            setNextTurn(prevTurn => data.turn);
+            if (data.playername === data.currPlayers[0]){
                 console.log("X turn");
                 setBoard(prevBoard => [...prevBoard, prevBoard[data.index] = 'X']);
             }
-            else {
+            else if (data.playername === data.currPlayers[1]) {
                 console.log("O turn");
                 setBoard(prevBoard => [...prevBoard, prevBoard[data.index] = 'O']);
             }
         });
+        socket.on('newUser', (userArray) => {
+            console.log('New User Received!');
+            setPlayers(userArray.allUsers.splice(0, 2));
+            setSpectators(userArray.allUsers);
+        });
+        socket.on('restartGame', () => {
+          //  setNextTurn(prevTurn => !prevTurn);
+            restartGame(); 
+        });
     }, []);
     
     useEffect(() => {
-        if (calculateWinner(board)){
-            return;
-        }
+        calculateWinner(board);
+       /* if (turn) {
+            setNextTurn(prevTurn => !prevTurn);
+        }*/
     }, [board]);
     
     function calculateWinner(board) {
@@ -58,15 +81,19 @@ export function Board(props) {
             const [a, b, c] = lines[i];
             if (board[a] && board[a] === board[b] && board[a] === board[c]) {
                 document.getElementById("winnerHead").style.visibility = "visible";
-                document.getElementById("winnerButton").style.visibility = "visible";
-                setOutcome(noOutcome => [noOutcome, board[a]+" Wins"]);
+                if (props.player === players[0] || props.player === players[1]) {
+                    document.getElementById("winnerButton").style.visibility = "visible";
+                }
+                setOutcome(noOutcome => [board[a]+" Wins"]);
                 return true;
             }
         }
         if (board.every(value => value !== null)) {
             document.getElementById("winnerHead").style.visibility = "visible";
-            document.getElementById("winnerButton").style.visibility = "visible";
-            setOutcome(noOutcome => [noOutcome, "Draw"]);
+            if (props.player === players[0] || props.player === players[1]) {
+                document.getElementById("winnerButton").style.visibility = "visible";
+            }
+            setOutcome(noOutcome => ["Draw"]);
             return true;
         }
         return false;
@@ -93,7 +120,22 @@ export function Board(props) {
             </div>
             <div>
                 <h3 id="winnerHead" style={{visibility: "hidden"}}>{outcome}</h3>
-                <button id="winnerButton" style={{visibility: "hidden"}} onClick={restartGame}>Play Again</button>
+                <button id="winnerButton" style={{visibility: "hidden"}} onClick={() => {restartGame(); socket.emit('restartGame');}}>Play Again</button>
+            </div>
+            <div>
+                <u>Player Playing X</u>
+                <br />
+                {players[0]}
+            </div>
+            <div>
+                <u>Player Playing O</u>
+                <br />
+                {players[1]}
+            </div>
+            <div><u>Spectators</u>
+                <ul>
+                  {spectators.map((viewer) => <UserList name={viewer} />)}
+                </ul>
             </div>
         </div>;
 }
