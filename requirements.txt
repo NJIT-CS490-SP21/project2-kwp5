@@ -4,5 +4,4 @@ Flask-Cors
 Flask-SQLAlchemy
 SQLAlchemy
 React
-react
 python-socketio
