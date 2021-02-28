@@ -6,7 +6,7 @@ import UserList from './UserList';
 
 const socket = io();
 export function Board(props) {
-    const [board, setBoard] = useState([null,null,null,null,null,null,null,null,null]);
+    const [board, setBoard] = useState(["","","","","","","","",""]);
     const [turn, setNextTurn] = useState(true);
     const [outcome, setOutcome] = useState("");
     const [players, setPlayers] = useState([]);
