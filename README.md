@@ -6,7 +6,7 @@
 ### <ins>Libraries Used</ins>: Flask, SocketIO, CORS, SQLAlchemy, React <br>
 ### <ins>How To Run</ins>:
   1. Install all technologies or libraries
-  2. Run spotifyPull.py <br>
+  2. Run app.py and in another terminal do npm run start<br>
     2.1. For heroku deployment have heroku installed and create a new app with: <br>
                ```     heroku login -i ``` <br>
                ```     heroku create {insert name or leave blank} ``` <br>
