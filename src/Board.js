@@ -12,16 +12,19 @@ export function Board(props) {
     const [players, setPlayers] = useState([]);
     const [spectators, setSpectators] = useState([]);
     function onClickBox(boxIndex) {
-        var data = { index: boxIndex, playername: props.player, turn: turn };
+        var data = { index: boxIndex, playername: props.player, turn: turn, currBoard: board };
         function playerOneTurn() {
             if (calculateWinner(board)) {
                 return;
             }
             if (board[boxIndex] == null && props.player === players[0]){
-                setBoard(prevBoard => [...prevBoard, prevBoard[boxIndex] = "X"]);
+                board[boxIndex] = "X";
+                setBoard(board);
                 setNextTurn(prevTurn => false);
                 data.turn = false;
+                data.currBoard = board;
                 socket.emit('boxClick', data);
+                calculateWinner(board);
             }
         }
         function playerTwoTurn() {
@@ -29,10 +32,13 @@ export function Board(props) {
                 return;
             }
             else if (board[boxIndex] == null && props.player === players[1]) {
-                setBoard(prevBoard => [...prevBoard, prevBoard[boxIndex] = "O"]);
+                board[boxIndex] = "O";
+                setBoard(board);
                 setNextTurn(prevTurn => true);
                 data.turn = true;
+                data.currBoard = board;
                 socket.emit('boxClick', data);
+                calculateWinner(board);
             }
         }
         if (props.player === players[0] && turn) {
@@ -51,11 +57,13 @@ export function Board(props) {
             setNextTurn(prevTurn => data.turn);
             if (data.playername === data.currPlayers[0]){
                 console.log("X turn");
-                setBoard(prevBoard => [...prevBoard, prevBoard[data.index] = "X"]);
+                data.currBoard[data.index] = "X";
+                setBoard(data.currBoard);
             }
             else if (data.playername === data.currPlayers[1]) {
                 console.log("O turn");
-                setBoard(prevBoard => [...prevBoard, prevBoard[data.index] = "O"]);
+                data.currBoard[data.index] = "O";
+                setBoard(data.currBoard);
             }
         });
         socket.on('newUser', (userArray) => {
