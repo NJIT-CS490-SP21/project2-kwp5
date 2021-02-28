@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__, static_folder='./build/static')
 
 allUsers = []
+restartTurn = [True]
 # Point SQLAlchemy to your Heroku database
 #app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 # Gets rid of a warning

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import io from 'socket.io-client';
 import './Board.css';
 import App from './App';
@@ -23,9 +23,16 @@ export function Login() {
     }
     
     return <div>
-            <div>
-                Enter a username:
+            <div class="login title">
+                <h1>Tic-Tac-Toe</h1>
+            </div>
+            <div class="login">
+                Enter a username
+            </div>
+            <div class="login input">
                 <input ref={inputRef} type='text' />
+            </div>
+            <div class="login button">
                 <button onClick={enterUser}>Login</button>
             </div>
         </div>;

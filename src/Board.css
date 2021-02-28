@@ -1,13 +1,107 @@
+body {
+    background-color: black;
+}
+
+.login {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin-top: -150px;
+    margin-left: -25px;
+    color: white;
+}
+
+.title {
+    margin-top: -350px;
+    margin-left: -185px;
+    font-size: 45px;
+}
+
+.input {
+    margin-top: -130px;
+    margin-left: -50px;
+}
+
+.button {
+    margin-top: -100px;
+    margin-left: 10px;
+}
+
+
 .board {
-    padding-top: 15px;
-    padding-left: 15px;
 	width: 300px; /* Total horizontal dimensions */
 	height: 300px; /* Total vertical dimensions */
 	display: grid; /* Enables CSS Grid */ 
 	grid-template-columns: repeat(3, 1fr); /* Total horizontal space broken into 3 columns */
-  grid-template-rows: repeat(3, 1fr); /* Total vertical space broken into 3 rows */
+	grid-template-rows: repeat(3, 1fr); /* Total vertical space broken into 3 rows */
 }
 
 .box {
-    border: 1px solid black; /* Shows the lines in the CSS grid */
+    border-color: white;
+    border-width: 1px;
+    font-size: 70px;
+    text-align: center;
+    font-weight: bold;
+    color: white;
+}
+
+.middle {
+    border-style: solid;
+}
+
+.topright {
+    border-style: none none solid solid;
+}
+
+.topleft {
+    border-style: none solid solid none;
+}
+
+.bottomright {
+    border-style: solid none none solid;
+}
+
+.bottomleft {
+    border-style: solid solid none none;
+}
+
+.boardcenter {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin-top: -150px;
+    margin-left: -100px;
+    color: white;
+}
+
+.textcenter {
+    text-align: center;
+    visibility: visible;
+    color: white;
+}
+
+.xplayer {
+    margin-left: -200px;
+}
+
+.oplayer {
+    margin-left: 200px;
+    margin-top: -42px;
+}
+
+.nonplayer {
+    margin-left: 0px;
+}
+
+.wincenter {
+    position: fixed;
+    left: 50%;
+    margin-left: -5px;
+    color: red;
+}
+
+.playagain {
+    position: fixed;
+    left: 50%;
+    margin-left: 11px;
 }

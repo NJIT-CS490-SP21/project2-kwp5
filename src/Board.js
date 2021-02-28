@@ -7,30 +7,40 @@ import UserList from './UserList';
 const socket = io();
 export function Board(props) {
     const [board, setBoard] = useState([null,null,null,null,null,null,null,null,null]);
-    const [turn, setNextTurn] = useState(false);
+    const [turn, setNextTurn] = useState(true);
     const [outcome, setOutcome] = useState("");
     const [players, setPlayers] = useState([]);
     const [spectators, setSpectators] = useState([]);
     function onClickBox(boxIndex) {
-        var data = { index: boxIndex, playername: props.player };
-        if (calculateWinner(board)) {
-            return;
-        }
-        setNextTurn(prevTurn => !prevTurn);
-        if (turn) {
+        var data = { index: boxIndex, playername: props.player, turn: turn };
+        function playerOneTurn() {
+            if (calculateWinner(board)) {
+                return;
+            }
             if (board[boxIndex] == null && props.player === players[0]){
                 setBoard(prevBoard => [...prevBoard, prevBoard[boxIndex] = 'X']);
+                setNextTurn(prevTurn => false);
+                data.turn = false;
                 socket.emit('boxClick', data);
-               // setNextTurn(prevTurn => !prevTurn);
+            }
+        }
+        function playerTwoTurn() {
+            if (calculateWinner(board)) {
+                return;
             }
             else if (board[boxIndex] == null && props.player === players[1]) {
                 setBoard(prevBoard => [...prevBoard, prevBoard[boxIndex] = 'O']);
+                setNextTurn(prevTurn => true);
+                data.turn = true;
                 socket.emit('boxClick', data);
-               // setNextTurn(prevTurn => !prevTurn);
             }
         }
-        console.log(turn);
-       // setNextTurn(prevTurn => !prevTurn);
+        if (props.player === players[0] && turn) {
+            playerOneTurn();
+        }
+        else if (props.player === players[1] && !turn) {
+            playerTwoTurn();
+        }
     }
 
     useEffect(() => {
@@ -54,16 +64,12 @@ export function Board(props) {
             setSpectators(userArray.allUsers);
         });
         socket.on('restartGame', () => {
-          //  setNextTurn(prevTurn => !prevTurn);
             restartGame(); 
         });
     }, []);
     
     useEffect(() => {
         calculateWinner(board);
-       /* if (turn) {
-            setNextTurn(prevTurn => !prevTurn);
-        }*/
     }, [board]);
     
     function calculateWinner(board) {
@@ -81,6 +87,10 @@ export function Board(props) {
             const [a, b, c] = lines[i];
             if (board[a] && board[a] === board[b] && board[a] === board[c]) {
                 document.getElementById("winnerHead").style.visibility = "visible";
+                document.getElementById("currTurn").style.visibility = "hidden";
+                document.getElementById(a).style.color = "red";
+                document.getElementById(b).style.color = "red";
+                document.getElementById(c).style.color = "red";
                 if (props.player === players[0] || props.player === players[1]) {
                     document.getElementById("winnerButton").style.visibility = "visible";
                 }
@@ -89,7 +99,7 @@ export function Board(props) {
             }
         }
         if (board.every(value => value !== null)) {
-            document.getElementById("winnerHead").style.visibility = "visible";
+            document.getElementById("currTurn").style.visibility = "hidden";
             if (props.player === players[0] || props.player === players[1]) {
                 document.getElementById("winnerButton").style.visibility = "visible";
             }
@@ -102,11 +112,19 @@ export function Board(props) {
     function restartGame() {
         setBoard([null,null,null,null,null,null,null,null,null]);
         setOutcome("");
+        for (var i = 0; i < 9; i++) {
+            document.getElementById(String(i)).style.color = "white";
+        }
         document.getElementById("winnerHead").style.visibility = "hidden";
         document.getElementById("winnerButton").style.visibility = "hidden";
+        document.getElementById("currTurn").style.visibility = "visible";
+        setNextTurn(prevTurn => !prevTurn);
     }
     
     return<div>
+            <div class="login title">
+                <h1>Tic-Tac-Toe</h1>
+            </div>
             <div class="board">
                 <Box event={onClickBox} index='0' value={board[0]}/>
                 <Box event={onClickBox} index='1' value={board[1]}/>
@@ -118,24 +136,33 @@ export function Board(props) {
                 <Box event={onClickBox} index='7' value={board[7]}/>
                 <Box event={onClickBox} index='8' value={board[8]}/>
             </div>
-            <div>
-                <h3 id="winnerHead" style={{visibility: "hidden"}}>{outcome}</h3>
+            <div class="wincenter">
+                <h1 id="winnerHead" style={{visibility: "hidden"}}>{outcome}</h1>
+            </div>
+            <div class="textcenter" id="currTurn">
+
+                {turn ? <h2>X Turn</h2> : <h2>O Turn</h2>}
+            </div>
+            <div class="playagain">
                 <button id="winnerButton" style={{visibility: "hidden"}} onClick={() => {restartGame(); socket.emit('restartGame');}}>Play Again</button>
             </div>
-            <div>
-                <u>Player Playing X</u>
-                <br />
-                {players[0]}
-            </div>
-            <div>
-                <u>Player Playing O</u>
-                <br />
-                {players[1]}
-            </div>
-            <div><u>Spectators</u>
-                <ul>
-                  {spectators.map((viewer) => <UserList name={viewer} />)}
-                </ul>
+            <div class="textcenter">
+                <div class="xplayer">
+                    <u>Playing X</u>
+                    <br />
+                    {players[0]}
+                </div>
+                <div class="oplayer">
+                    <u>Playing O</u>
+                    <br />
+                    {players[1]}
+                </div>
+                <div class="nonplayer">
+                    <u>Spectators</u>
+                    <p style={{listStyleType: "none"}}>
+                      {spectators.map((viewer) => <UserList name={viewer} />)}
+                    </p>
+                </div>
             </div>
         </div>;
 }

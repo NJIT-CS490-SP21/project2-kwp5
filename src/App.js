@@ -6,10 +6,8 @@ import './Board.css';
 function App(props) {
   
   return (
-    <div>
-      <div>
-        <Board player={props.name}/>
-      </div>
+    <div class="boardcenter">
+      <Board player={props.name}/>
     </div>
   );
 }
