@@ -25,7 +25,7 @@
 ### <ins>Future Additions<ins>:
   1. Add achat room in which people can talk about the game and whatever else <br>
     ~ Could be done by implementing a sql table that would hold messages and send them all out via socket based on a chat emit
-  2. When people login they can pick a color that would be their username, chat message color, and color that flashes when they win the game
+  2. When people login they can pick a color that would be their username, chat message color, and color that flashes when they win the game <br>
     ~ Similar to the username it would also have another input based on given colors or hex that would be in a dictionary and access in the javascript, css, and socket to display the color they picked
-  3. Add a queue so all spectators can play based on when they arive
+  3. Add a queue so all spectators can play based on when they arive <br>
     ~ Could be done by labeling the players "player" and spectators "spec" which is already somewhat implemented, but then would swap the values between the player who lost and the top spectator
