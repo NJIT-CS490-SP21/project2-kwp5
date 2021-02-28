@@ -1,5 +1,6 @@
 Flask
-SocketIO
-CORS
+Flask-SocketIO
+Flask-Cors
+Flask-SQLAlchemy
 SQLAlchemy
 React
