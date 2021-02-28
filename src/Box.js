@@ -1,7 +1,6 @@
 import './Board.css';
 
 export function Box(props) {
-    console.log(props.index);
     switch(props.index) {
         case '0':
             return <div id={props.index} class="box topleft" onClick={() => props.event(props.index)}>{props.value}</div>;
