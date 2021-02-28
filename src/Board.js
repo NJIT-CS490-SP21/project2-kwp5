@@ -18,7 +18,7 @@ export function Board(props) {
                 return;
             }
             if (board[boxIndex] == null && props.player === players[0]){
-                setBoard(prevBoard => [...prevBoard, prevBoard[boxIndex] = 'X']);
+                setBoard(prevBoard => [...prevBoard, prevBoard[boxIndex] = "X"]);
                 setNextTurn(prevTurn => false);
                 data.turn = false;
                 socket.emit('boxClick', data);
@@ -29,7 +29,7 @@ export function Board(props) {
                 return;
             }
             else if (board[boxIndex] == null && props.player === players[1]) {
-                setBoard(prevBoard => [...prevBoard, prevBoard[boxIndex] = 'O']);
+                setBoard(prevBoard => [...prevBoard, prevBoard[boxIndex] = "O"]);
                 setNextTurn(prevTurn => true);
                 data.turn = true;
                 socket.emit('boxClick', data);
@@ -51,11 +51,11 @@ export function Board(props) {
             setNextTurn(prevTurn => data.turn);
             if (data.playername === data.currPlayers[0]){
                 console.log("X turn");
-                setBoard(prevBoard => [...prevBoard, prevBoard[data.index] = 'X']);
+                setBoard(prevBoard => [...prevBoard, prevBoard[data.index] = "X"]);
             }
             else if (data.playername === data.currPlayers[1]) {
                 console.log("O turn");
-                setBoard(prevBoard => [...prevBoard, prevBoard[data.index] = 'O']);
+                setBoard(prevBoard => [...prevBoard, prevBoard[data.index] = "O"]);
             }
         });
         socket.on('newUser', (userArray) => {
