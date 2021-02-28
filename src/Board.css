@@ -27,6 +27,10 @@ body {
     margin-left: 10px;
 }
 
+.note {
+    margin-top: -70px;
+    margin-left: -55px;
+}
 
 .board {
 	width: 300px; /* Total horizontal dimensions */

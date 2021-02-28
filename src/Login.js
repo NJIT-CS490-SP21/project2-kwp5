@@ -35,6 +35,9 @@ export function Login() {
             <div class="login button">
                 <button onClick={enterUser}>Login</button>
             </div>
+            <div class="login note">
+                **Might take time to load
+            </div>
         </div>;
 }
 
