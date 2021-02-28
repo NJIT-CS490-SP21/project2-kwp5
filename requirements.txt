@@ -1,1 +1,7 @@
 Flask
+SocketIO
+CORS
+SQLAlchemy
+io
+React
+ReactDOM
