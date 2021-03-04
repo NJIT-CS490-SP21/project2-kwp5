@@ -1,5 +1,6 @@
 import './Board.css';
 import { Box } from './Box.js';
+import { Leaderboard_Users, Leaderboard_Scores } from '.Leaderboard.js';
 import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import UserList from './UserList';
@@ -11,12 +12,12 @@ export function Board(props) {
     const [outcome, setOutcome] = useState("");
     const [players, setPlayers] = useState([]);
     const [spectators, setSpectators] = useState([]);
+    const [allUsers, setAllUsers] = useState([]);
+    const [allScores, setAllScores] = useState([]);
+    const [update, setUpdate] = useState(true);
     function onClickBox(boxIndex) {
         var data = { index: boxIndex, playername: props.player, turn: turn, currBoard: board };
         function playerOneTurn() {
-            if (calculateWinner(board)) {
-                return;
-            }
             if (board[boxIndex] == null && props.player === players[0]){
                 board[boxIndex] = "X";
                 setBoard(board);
@@ -28,10 +29,7 @@ export function Board(props) {
             }
         }
         function playerTwoTurn() {
-            if (calculateWinner(board)) {
-                return;
-            }
-            else if (board[boxIndex] == null && props.player === players[1]) {
+            if (board[boxIndex] == null && props.player === players[1]) {
                 board[boxIndex] = "O";
                 setBoard(board);
                 setNextTurn(prevTurn => true);
@@ -40,6 +38,14 @@ export function Board(props) {
                 socket.emit('boxClick', data);
                 calculateWinner(board);
             }
+        }
+        if (calculateWinner(board)) {
+            if (update) {
+                var endData = { outcome: outcome, players: players };
+                socket.emit('gameover', endData);
+                setUpdate(prevUpdate => false);
+            }
+            return;
         }
         if (props.player === players[0] && turn) {
             playerOneTurn();
@@ -55,12 +61,12 @@ export function Board(props) {
             console.log(data.index);
             console.log(data.turn);
             setNextTurn(prevTurn => data.turn);
-            if (data.playername === data.currPlayers[0]){
+            if (data.playername === data.curr_players[0]){
                 console.log("X turn");
                 data.currBoard[data.index] = "X";
                 setBoard(data.currBoard);
             }
-            else if (data.playername === data.currPlayers[1]) {
+            else if (data.playername === data.curr_players[1]) {
                 console.log("O turn");
                 data.currBoard[data.index] = "O";
                 setBoard(data.currBoard);
@@ -68,8 +74,14 @@ export function Board(props) {
         });
         socket.on('newUser', (userArray) => {
             console.log('New User Received!');
-            setPlayers(userArray.allUsers.splice(0, 2));
-            setSpectators(userArray.allUsers);
+            setPlayers(userArray.curr_players.splice(0, 2));
+            setSpectators(userArray.curr_players);
+            setAllUsers(userArray.allUsers);
+            setAllScores(userArray.player_scores);
+        });
+        socket.on('gameover', (userArray) => {
+            setAllUsers(userArray.allUsers);
+            setAllScores(userArray.player_scores);
         });
         socket.on('restartGame', () => {
             restartGame(); 
@@ -171,6 +183,18 @@ export function Board(props) {
                       {spectators.map((viewer) => <UserList name={viewer} />)}
                     </p>
                 </div>
+            </div>
+            <div>
+                <table>
+                    <tr>
+                        <th>User</th>
+                        <th>Score</th>
+                    </tr>
+                    <tr>
+                    {allUsers.map((user) => <Leaderboard_Users users={user}/>)}
+                    {allScores.map((score) => <Leaderboard_Scores score={score}/>)}
+                    </tr>
+                </table>
             </div>
         </div>;
 }
