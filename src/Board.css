@@ -2,6 +2,10 @@ body {
     background-color: black;
 }
 
+th, td {
+    border: 1px solid white;
+}
+
 .login {
     position: fixed;
     top: 50%;
@@ -29,7 +33,7 @@ body {
 
 .note {
     margin-top: -70px;
-    margin-left: -55px;
+    margin-left: -120px;
 }
 
 .board {
@@ -108,4 +112,24 @@ body {
     position: fixed;
     left: 50%;
     margin-left: 11px;
+}
+
+.leaderboard {
+    border: solid white;
+}
+
+.leaderboardButton {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin-top: -175px;
+    margin-left: 350px;
+}
+
+.holder {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin-top: -150px;
+    margin-left: 350px;
 }

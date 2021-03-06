@@ -5,3 +5,4 @@ Flask-SQLAlchemy
 SQLAlchemy
 React
 python-socketio
+python-dotenv==0.15.0

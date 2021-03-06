@@ -5,23 +5,22 @@ export function Leaderboard(props) {
     for (var i = 0; i < props.users.length; i++) {
         if (props.users[i] == props.curr_name) {
             allData.push({
-                users:props.users[i]+" (YOU)",
-                scores:props.scores[i]
+                scores:props.scores[i],
+                users:props.users[i]+" (YOU)"
             });
         }
         else {
             allData.push({
-                users:props.users[i],
-                scores:props.scores[i]
+                scores:props.scores[i],
+                users:props.users[i]
             });
         }
     }
-    console.log(allData);
-    return (<table id="leaderboard_table">
+    return (<table class="leaderboard" id="leaderboard_table">
                 <tbody>
                 <tr>
-                    <th>User</th>
                     <th>Score</th>
+                    <th>User</th>
                 </tr>
                 {allData.map((item, index) => (<tr>
                                     {Object.values(item).map((val, index) => (

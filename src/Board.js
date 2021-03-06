@@ -14,9 +14,11 @@ export function Board(props) {
     const [spectators, setSpectators] = useState([]);
     const [allUsers, setAllUsers] = useState([]);
     const [allScores, setAllScores] = useState([]);
-    var winner = "";
     function onClickBox(boxIndex) {
         var data = { index: boxIndex, playername: props.player, turn: turn, currBoard: board };
+        if (calculateWinner(board)) {
+            return;
+        }
         function playerOneTurn() {
             if (board[boxIndex] == null && props.player === players[0]){
                 board[boxIndex] = "X";
@@ -25,7 +27,10 @@ export function Board(props) {
                 data.turn = false;
                 data.currBoard = board;
                 socket.emit('boxClick', data);
-                calculateWinner(board);
+                if (calculateWinner(board)) {
+                    var endData = { winner: calculateWinner(board), players: players };
+                    socket.emit('gameover', endData);
+                }
             }
         }
         function playerTwoTurn() {
@@ -36,7 +41,10 @@ export function Board(props) {
                 data.turn = true;
                 data.currBoard = board;
                 socket.emit('boxClick', data);
-                calculateWinner(board);
+                if (calculateWinner(board)) {
+                    var endData = { winner: calculateWinner(board), players: players };
+                    socket.emit('gameover', endData);
+                }
             }
         }
         if (props.player === players[0] && turn) {
@@ -69,11 +77,8 @@ export function Board(props) {
                 if (props.player === players[0] || props.player === players[1]) {
                     document.getElementById("winnerButton").style.visibility = "visible";
                 }
-                winner = board[a]+" Wins";
-                setOutcome(noOutcome => [winner]);
-                var endData = { outcome: winner, players: players };
-                socket.emit('gameover', endData);
-                return true;
+                setOutcome(newOutcome => board[a]+" Wins");
+                return board[a];
             }
         }
         if (board.every(value => value !== null)) {
@@ -81,7 +86,6 @@ export function Board(props) {
             if (props.player === players[0] || props.player === players[1]) {
                 document.getElementById("winnerButton").style.visibility = "visible";
             }
-            setOutcome(noOutcome => ["Draw"]);
             return true;
         }
         return false;
@@ -89,8 +93,7 @@ export function Board(props) {
     
     function restartGame() {
         setBoard([null,null,null,null,null,null,null,null,null]);
-        setOutcome("");
-        winner = "";
+        setOutcome(newOutcome => "");
         for (var i = 0; i < 9; i++) {
             document.getElementById(String(i)).style.color = "white";
         }
@@ -190,8 +193,8 @@ export function Board(props) {
                     </p>
                 </div>
             </div>
-            <button onClick={showLeaderBoard}>Show Leaderboard</button>
-            <div id="leaderboard" style={{visibility: "hidden"}}>
+            <button class="leaderboardButton" onClick={showLeaderBoard}>Show Leaderboard</button>
+            <div class="holder" id="leaderboard" style={{visibility: "hidden"}}>
                 <Leaderboard users={allUsers} scores={allScores} curr_name={props.player}/>
             </div>
         </div>;
