@@ -97,7 +97,6 @@ def on_gameover(data):
     data['allUsers'] = ALLUSERS
     data['player_scores'] = USERSCORES
     SOCKETIO.emit('gameover', data)
-
 # Note we need to add this line so we can import APP in the python shell
 if __name__ == "__main__":
 # Note that we don't call APP.run anymore. We call SOCKETIO.run with APP arg
