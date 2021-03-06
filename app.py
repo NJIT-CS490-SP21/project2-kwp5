@@ -6,30 +6,31 @@ from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())
-APP = Flask(__name__, static_folder='./build/static')
+app = Flask(__name__, static_folder='./build/static')
 
 ALLUSERS = []
 ACTIVEUSERS = []
+USERSCORES = []
+check = True
 # Point SQLAlchemy to your Heroku database
-APP.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 # Gets rid of a warning
-APP.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-DB = SQLAlchemy(APP)
+DB = SQLAlchemy(app)
 # IMPORTANT: This must be AFTER creating db variable to prevent
 # circular import issues
-import leader_db
-DB.create_all()
-CORS = CORS(APP, resources={r"/*": {"origins": "*"}})
+import models
+CORS = CORS(app, resources={r"/*": {"origins": "*"}})
 SOCKETIO = SocketIO(
-    APP,
+    app,
     cors_allowed_origins="*",
     json=json,
     manage_session=False
 )
 
-@APP.route('/', defaults={"filename": "index.html"})
-@APP.route('/<path:filename>')
+@app.route('/', defaults={"filename": "index.html"})
+@app.route('/<path:filename>')
 def index(filename):
     return send_from_directory('./build', filename)
 
@@ -63,25 +64,27 @@ def on_chat(data): # data is whatever arg you pass in your emit call on client
 
 @SOCKETIO.on('newUser')
 def on_new_user(user):
-    print(str(user))
-    new_user = leader_db.Leaderboard(username=user['username'], score=100)
-    if not new_user:
+    user_check = DB.session.query(models.Leaderboard).filter_by(username=user['username']).first()
+    if user_check is None:
+        new_user = models.Leaderboard(username=user['username'], score=100)
         DB.session.add(new_user)
         DB.session.commit()
-    new_active_user = leader_db.Active(username=user['username'])
-    DB.session.add(new_active_user)
-    DB.session.commit()
-    all_people = leader_db.Leaderboard.query.all()
-    all_active_people = leader_db.Active.query.all()
-    scores = []
+    active_user_check = DB.session.query(models.Active).filter_by(name=user['username']).first()
+    if active_user_check is None:
+        new_active_user = models.Active(name=user['username'])
+        DB.session.add(new_active_user)
+        DB.session.commit()
+    all_people = DB.session.query(models.Leaderboard).order_by(models.Leaderboard.score.desc()).all()
     for person in all_people:
-        ALLUSERS.append(person.username)
-        scores.append(person.score)
-    for active in all_active_people:
-        ACTIVEUSERS.append(active.username)
+        if person.username not in ALLUSERS:
+            ALLUSERS.append(person.username)
+            USERSCORES.append(person.score)
+    for person in models.Active.query.all():
+        if person.name not in ACTIVEUSERS:
+            ACTIVEUSERS.append(person.name)
     user['allUsers'] = ALLUSERS
-    user['curr_players'] = ACTIVEUSERS
-    user['player_scores'] = scores
+    user['activeUsers'] = ACTIVEUSERS
+    user['player_scores'] = USERSCORES
     SOCKETIO.emit('newUser', user, broadcast=True, include_self=False)
 
 @SOCKETIO.on('restartGame')
@@ -90,22 +93,26 @@ def on_restart_game():
     
 @SOCKETIO.on('gameover')
 def on_gameover(data):
-    player1 = leader_db.Leaderboard.query.filter_by(username=data['players'][0]).first()
-    player2 = leader_db.Leaderboard.query.filter_by(username=data['players'][1]).first()
+    ALLUSERS = []
+    USERSCORES = []
+    player1 = DB.session.query(models.Leaderboard).filter_by(username=data['players'][0]).first()
+    player2 = DB.session.query(models.Leaderboard).filter_by(username=data['players'][1]).first()
+    print(data['outcome'])
     if data['outcome'] == "X Wins":
-        player1.score += 1
-        player2.score -= 1
-    if data['outcome'] == "O Wins":
-        player1.score -= 1
-        player2.score += 1
+        player1.score = player1.score + 1
+        player2.score = player2.score - 1
+    elif data['outcome'] == "O Wins":
+        player2.score = player2.score + 1
+        player1.score = player1.score - 1
+    DB.session.merge(player1)
+    DB.session.merge(player2)
     DB.session.commit()
-    all_people = leader_db.Leaderboard.query.all()
-    scores = []
+    all_people = DB.session.query(models.Leaderboard).order_by(models.Leaderboard.score.desc()).all()
     for person in all_people:
         ALLUSERS.append(person.username)
-        scores.append(person.score)
+        USERSCORES.append(person.score)
     data['allUsers'] = ALLUSERS
-    data['player_scores'] = scores
+    data['player_scores'] = USERSCORES
     SOCKETIO.emit('gameover', data)
 
 
@@ -113,7 +120,7 @@ def on_gameover(data):
 if __name__ == "__main__":
 # Note that we don't call APP.run anymore. We call SOCKETIO.run with APP arg
     SOCKETIO.run(
-        APP,
+        app,
         host=os.getenv('IP', '0.0.0.0'),
         port=8081 if os.getenv('C9_PORT') else int(os.getenv('PORT', 8081)),
     )

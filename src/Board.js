@@ -1,6 +1,6 @@
 import './Board.css';
 import { Box } from './Box.js';
-import { Leaderboard_Users, Leaderboard_Scores } from '.Leaderboard.js';
+import { Leaderboard } from './Leaderboard.js';
 import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import UserList from './UserList';
@@ -14,7 +14,7 @@ export function Board(props) {
     const [spectators, setSpectators] = useState([]);
     const [allUsers, setAllUsers] = useState([]);
     const [allScores, setAllScores] = useState([]);
-    const [update, setUpdate] = useState(true);
+    var winner = "";
     function onClickBox(boxIndex) {
         var data = { index: boxIndex, playername: props.player, turn: turn, currBoard: board };
         function playerOneTurn() {
@@ -39,14 +39,6 @@ export function Board(props) {
                 calculateWinner(board);
             }
         }
-        if (calculateWinner(board)) {
-            if (update) {
-                var endData = { outcome: outcome, players: players };
-                socket.emit('gameover', endData);
-                setUpdate(prevUpdate => false);
-            }
-            return;
-        }
         if (props.player === players[0] && turn) {
             playerOneTurn();
         }
@@ -54,43 +46,6 @@ export function Board(props) {
             playerTwoTurn();
         }
     }
-
-    useEffect(() => {
-        socket.on('boxClick', (data) => {
-            console.log('Chat event received!');
-            console.log(data.index);
-            console.log(data.turn);
-            setNextTurn(prevTurn => data.turn);
-            if (data.playername === data.curr_players[0]){
-                console.log("X turn");
-                data.currBoard[data.index] = "X";
-                setBoard(data.currBoard);
-            }
-            else if (data.playername === data.curr_players[1]) {
-                console.log("O turn");
-                data.currBoard[data.index] = "O";
-                setBoard(data.currBoard);
-            }
-        });
-        socket.on('newUser', (userArray) => {
-            console.log('New User Received!');
-            setPlayers(userArray.curr_players.splice(0, 2));
-            setSpectators(userArray.curr_players);
-            setAllUsers(userArray.allUsers);
-            setAllScores(userArray.player_scores);
-        });
-        socket.on('gameover', (userArray) => {
-            setAllUsers(userArray.allUsers);
-            setAllScores(userArray.player_scores);
-        });
-        socket.on('restartGame', () => {
-            restartGame(); 
-        });
-    }, []);
-    
-    useEffect(() => {
-        calculateWinner(board);
-    }, [board]);
     
     function calculateWinner(board) {
         const lines = [
@@ -114,7 +69,10 @@ export function Board(props) {
                 if (props.player === players[0] || props.player === players[1]) {
                     document.getElementById("winnerButton").style.visibility = "visible";
                 }
-                setOutcome(noOutcome => [board[a]+" Wins"]);
+                winner = board[a]+" Wins";
+                setOutcome(noOutcome => [winner]);
+                var endData = { outcome: winner, players: players };
+                socket.emit('gameover', endData);
                 return true;
             }
         }
@@ -132,6 +90,7 @@ export function Board(props) {
     function restartGame() {
         setBoard([null,null,null,null,null,null,null,null,null]);
         setOutcome("");
+        winner = "";
         for (var i = 0; i < 9; i++) {
             document.getElementById(String(i)).style.color = "white";
         }
@@ -140,6 +99,53 @@ export function Board(props) {
         document.getElementById("currTurn").style.visibility = "visible";
         setNextTurn(prevTurn => !prevTurn);
     }
+    
+    function showLeaderBoard() {
+        var board = document.getElementById("leaderboard");
+        if (board.style.visibility === "hidden") {
+            board.style.visibility = "visible";
+        }
+        else {
+            board.style.visibility = "hidden";
+        }
+    }
+    
+    useEffect(() => {
+        socket.on('boxClick', (data) => {
+            console.log('Chat event received!');
+            console.log(data.index);
+            console.log(data.turn);
+            setNextTurn(prevTurn => data.turn);
+            if (data.playername === data.curr_players[0]){
+                console.log("X turn");
+                data.currBoard[data.index] = "X";
+                setBoard(data.currBoard);
+            }
+            else if (data.playername === data.curr_players[1]) {
+                console.log("O turn");
+                data.currBoard[data.index] = "O";
+                setBoard(data.currBoard);
+            }
+        });
+        socket.on('newUser', (userArray) => {
+            console.log('New User Received!');
+            setPlayers(userArray.activeUsers.splice(0,2));
+            setSpectators(userArray.activeUsers);
+            setAllUsers(userArray.allUsers);
+            setAllScores(userArray.player_scores);
+        });
+        socket.on('gameover', (userArray) => {
+            setAllUsers(userArray.allUsers);
+            setAllScores(userArray.player_scores);
+        });
+        socket.on('restartGame', () => {
+            restartGame(); 
+        });
+    }, []);
+    
+    useEffect(() => {
+        calculateWinner(board);
+    }, [board]);
     
     return<div>
             <div class="login title">
@@ -184,17 +190,9 @@ export function Board(props) {
                     </p>
                 </div>
             </div>
-            <div>
-                <table>
-                    <tr>
-                        <th>User</th>
-                        <th>Score</th>
-                    </tr>
-                    <tr>
-                    {allUsers.map((user) => <Leaderboard_Users users={user}/>)}
-                    {allScores.map((score) => <Leaderboard_Scores score={score}/>)}
-                    </tr>
-                </table>
+            <button onClick={showLeaderBoard}>Show Leaderboard</button>
+            <div id="leaderboard" style={{visibility: "hidden"}}>
+                <Leaderboard users={allUsers} scores={allScores} curr_name={props.player}/>
             </div>
         </div>;
 }

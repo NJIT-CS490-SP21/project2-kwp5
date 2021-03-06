@@ -10,7 +10,7 @@ class Leaderboard(DB.Model):
 
 class Active(DB.Model):
     id = DB.Column(DB.Integer, primary_key=True)
-    username = DB.Column(DB.String(80), unique=True, nullable=False)
+    name = DB.Column(DB.String(80), unique=True, nullable=False)
 
     def __repr__(self):
-        return '<Active %r>' % self.username
+        return '<Active %r>' % self.name
