@@ -1,15 +1,22 @@
-import './App.css';
-import { Board } from './Board.js';
+import React from 'react';
+import PropTypes from 'prop-types';
+import Board from './Board';
 import './Board.css';
 
-
 function App(props) {
-  
+  const { name } = props;
   return (
-    <div class="boardcenter">
-      <Board player={props.name}/>
+    <div id="board" className="boardcenter">
+      <Board player={name} />
     </div>
   );
 }
+
+App.propTypes = {
+  name: PropTypes.string,
+};
+App.defaultProps = {
+  name: '',
+};
 
 export default App;

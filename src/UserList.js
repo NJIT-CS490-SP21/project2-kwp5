@@ -1,5 +1,15 @@
-export function UserList(props) {
-    return <li>{props.name}</li>;
+import './Board.css';
+import PropTypes from 'prop-types';
+import React from 'react';
+
+export default function UserList(props) {
+  const { name } = props;
+  return <li>{name}</li>;
 }
 
-export default UserList;
+UserList.propTypes = {
+  name: PropTypes.string,
+};
+UserList.defaultProps = {
+  name: '',
+};
