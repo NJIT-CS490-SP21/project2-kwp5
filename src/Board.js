@@ -1,5 +1,6 @@
 import './Board.css';
 import { Box } from './Box.js';
+import { Leaderboard } from './Leaderboard.js';
 import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import UserList from './UserList';
@@ -11,12 +12,14 @@ export function Board(props) {
     const [outcome, setOutcome] = useState("");
     const [players, setPlayers] = useState([]);
     const [spectators, setSpectators] = useState([]);
+    const [allUsers, setAllUsers] = useState([]);
+    const [allScores, setAllScores] = useState([]);
     function onClickBox(boxIndex) {
         var data = { index: boxIndex, playername: props.player, turn: turn, currBoard: board };
+        if (calculateWinner(board)) {
+            return;
+        }
         function playerOneTurn() {
-            if (calculateWinner(board)) {
-                return;
-            }
             if (board[boxIndex] == null && props.player === players[0]){
                 board[boxIndex] = "X";
                 setBoard(board);
@@ -24,21 +27,24 @@ export function Board(props) {
                 data.turn = false;
                 data.currBoard = board;
                 socket.emit('boxClick', data);
-                calculateWinner(board);
+                if (calculateWinner(board)) {
+                    var endData = { winner: calculateWinner(board), players: players };
+                    socket.emit('gameover', endData);
+                }
             }
         }
         function playerTwoTurn() {
-            if (calculateWinner(board)) {
-                return;
-            }
-            else if (board[boxIndex] == null && props.player === players[1]) {
+            if (board[boxIndex] == null && props.player === players[1]) {
                 board[boxIndex] = "O";
                 setBoard(board);
                 setNextTurn(prevTurn => true);
                 data.turn = true;
                 data.currBoard = board;
                 socket.emit('boxClick', data);
-                calculateWinner(board);
+                if (calculateWinner(board)) {
+                    var endData = { winner: calculateWinner(board), players: players };
+                    socket.emit('gameover', endData);
+                }
             }
         }
         if (props.player === players[0] && turn) {
@@ -48,37 +54,6 @@ export function Board(props) {
             playerTwoTurn();
         }
     }
-
-    useEffect(() => {
-        socket.on('boxClick', (data) => {
-            console.log('Chat event received!');
-            console.log(data.index);
-            console.log(data.turn);
-            setNextTurn(prevTurn => data.turn);
-            if (data.playername === data.currPlayers[0]){
-                console.log("X turn");
-                data.currBoard[data.index] = "X";
-                setBoard(data.currBoard);
-            }
-            else if (data.playername === data.currPlayers[1]) {
-                console.log("O turn");
-                data.currBoard[data.index] = "O";
-                setBoard(data.currBoard);
-            }
-        });
-        socket.on('newUser', (userArray) => {
-            console.log('New User Received!');
-            setPlayers(userArray.allUsers.splice(0, 2));
-            setSpectators(userArray.allUsers);
-        });
-        socket.on('restartGame', () => {
-            restartGame(); 
-        });
-    }, []);
-    
-    useEffect(() => {
-        calculateWinner(board);
-    }, [board]);
     
     function calculateWinner(board) {
         const lines = [
@@ -102,8 +77,8 @@ export function Board(props) {
                 if (props.player === players[0] || props.player === players[1]) {
                     document.getElementById("winnerButton").style.visibility = "visible";
                 }
-                setOutcome(noOutcome => [board[a]+" Wins"]);
-                return true;
+                setOutcome(newOutcome => board[a]+" Wins");
+                return board[a];
             }
         }
         if (board.every(value => value !== null)) {
@@ -111,7 +86,6 @@ export function Board(props) {
             if (props.player === players[0] || props.player === players[1]) {
                 document.getElementById("winnerButton").style.visibility = "visible";
             }
-            setOutcome(noOutcome => ["Draw"]);
             return true;
         }
         return false;
@@ -119,7 +93,7 @@ export function Board(props) {
     
     function restartGame() {
         setBoard([null,null,null,null,null,null,null,null,null]);
-        setOutcome("");
+        setOutcome(newOutcome => "");
         for (var i = 0; i < 9; i++) {
             document.getElementById(String(i)).style.color = "white";
         }
@@ -128,6 +102,53 @@ export function Board(props) {
         document.getElementById("currTurn").style.visibility = "visible";
         setNextTurn(prevTurn => !prevTurn);
     }
+    
+    function showLeaderBoard() {
+        var board = document.getElementById("leaderboard");
+        if (board.style.visibility === "hidden") {
+            board.style.visibility = "visible";
+        }
+        else {
+            board.style.visibility = "hidden";
+        }
+    }
+    
+    useEffect(() => {
+        socket.on('boxClick', (data) => {
+            console.log('Chat event received!');
+            console.log(data.index);
+            console.log(data.turn);
+            setNextTurn(prevTurn => data.turn);
+            if (data.playername === data.curr_players[0]){
+                console.log("X turn");
+                data.currBoard[data.index] = "X";
+                setBoard(data.currBoard);
+            }
+            else if (data.playername === data.curr_players[1]) {
+                console.log("O turn");
+                data.currBoard[data.index] = "O";
+                setBoard(data.currBoard);
+            }
+        });
+        socket.on('newUser', (userArray) => {
+            console.log('New User Received!');
+            setPlayers(userArray.activeUsers.splice(0,2));
+            setSpectators(userArray.activeUsers);
+            setAllUsers(userArray.allUsers);
+            setAllScores(userArray.player_scores);
+        });
+        socket.on('gameover', (userArray) => {
+            setAllUsers(userArray.allUsers);
+            setAllScores(userArray.player_scores);
+        });
+        socket.on('restartGame', () => {
+            restartGame(); 
+        });
+    }, []);
+    
+    useEffect(() => {
+        calculateWinner(board);
+    }, [board]);
     
     return<div>
             <div class="login title">
@@ -171,6 +192,10 @@ export function Board(props) {
                       {spectators.map((viewer) => <UserList name={viewer} />)}
                     </p>
                 </div>
+            </div>
+            <button class="leaderboardButton" onClick={showLeaderBoard}>Show Leaderboard</button>
+            <div class="holder" id="leaderboard" style={{visibility: "hidden"}}>
+                <Leaderboard users={allUsers} scores={allScores} curr_name={props.player}/>
             </div>
         </div>;
 }

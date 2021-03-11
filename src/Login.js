@@ -36,7 +36,9 @@ export function Login() {
                 <button onClick={enterUser}>Login</button>
             </div>
             <div class="login note">
-                **Might take time to load
+                ** To demo easier enter the first user (X) as "a"<br /> 
+                and the second user on another tab (O) as "b". <br /> 
+                Any other users will be spectators.
             </div>
         </div>;
 }
