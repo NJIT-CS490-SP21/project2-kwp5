@@ -27,7 +27,7 @@ SOCKETIO = SocketIO(APP,
 @APP.route('/', defaults={"filename": "index.html"})
 @APP.route('/<path:filename>')
 def index(filename):
-    '''Get index file.'''
+    '''Get file.'''
     return send_from_directory('./build', filename)
 
 
@@ -56,16 +56,25 @@ def on_box_click(data):
 @SOCKETIO.on('newUser')
 def on_new_user(user):
     '''Add new user to leaderboard and player list.'''
+    new_user_helper(user)
+    user['allUsers'] = ALLUSERS
+    user['activeUsers'] = ACTIVEUSERS
+    user['player_scores'] = USERSCORES
+    SOCKETIO.emit('newUser', user, broadcast=True, include_self=False)
+
+
+def new_user_helper(userdata):
+    '''Helper for on_new_user function'''
     user_check = DB.session.query(
-        models.Leaderboard).filter_by(username=user['username']).first()
+        models.Leaderboard).filter_by(username=userdata['username']).first()
     if user_check is None:
-        new_user = models.Leaderboard(username=user['username'], score=100)
+        new_user = models.Leaderboard(username=userdata['username'], score=100)
         DB.session.add(new_user)
         DB.session.commit()
     active_user_check = DB.session.query(
-        models.Active).filter_by(name=user['username']).first()
+        models.Active).filter_by(name=userdata['username']).first()
     if active_user_check is None:
-        new_active_user = models.Active(name=user['username'])
+        new_active_user = models.Active(name=userdata['username'])
         DB.session.add(new_active_user)
         DB.session.commit()
     all_people = DB.session.query(models.Leaderboard).order_by(
@@ -77,10 +86,7 @@ def on_new_user(user):
     for person in models.Active.query.all():
         if person.name not in ACTIVEUSERS:
             ACTIVEUSERS.append(person.name)
-    user['allUsers'] = ALLUSERS
-    user['activeUsers'] = ACTIVEUSERS
-    user['player_scores'] = USERSCORES
-    SOCKETIO.emit('newUser', user, broadcast=True, include_self=False)
+    return ALLUSERS
 
 
 @SOCKETIO.on('restartGame')
@@ -94,15 +100,23 @@ def on_gameover(data):
     '''Update leaderboard for all users.'''
     ALLUSERS.clear()
     USERSCORES.clear()
-    player1 = DB.session.query(
-        models.Leaderboard).filter_by(username=data['players'][0]).first()
-    player2 = DB.session.query(
-        models.Leaderboard).filter_by(username=data['players'][1]).first()
-    print(data['winner'])
-    if data['winner'] == "X":
+    gameover_helper(data)
+    data['allUsers'] = ALLUSERS
+    data['player_scores'] = USERSCORES
+    SOCKETIO.emit('gameover', data)
+
+
+def gameover_helper(scoredata):
+    '''Helper for on_gameover function'''
+    player1 = DB.session.query(models.Leaderboard).filter_by(
+        username=scoredata['players'][0]).first()
+    player2 = DB.session.query(models.Leaderboard).filter_by(
+        username=scoredata['players'][1]).first()
+    print(scoredata['winner'])
+    if scoredata['winner'] == "X":
         player1.score = player1.score + 1
         player2.score = player2.score - 1
-    elif data['winner'] == "O":
+    elif scoredata['winner'] == "O":
         player2.score = player2.score + 1
         player1.score = player1.score - 1
     DB.session.merge(player1)
@@ -113,9 +127,7 @@ def on_gameover(data):
     for person in all_people:
         ALLUSERS.append(person.username)
         USERSCORES.append(person.score)
-    data['allUsers'] = ALLUSERS
-    data['player_scores'] = USERSCORES
-    SOCKETIO.emit('gameover', data)
+    return [player1.score, player2.score]
 
 
 # Note we need to add this line so we can import APP in the python shell
